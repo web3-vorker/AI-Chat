@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Chat</title>
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="/static/favicon.svg" />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="bg">
+      <div class="bg__grid"></div>
+      <div class="bg__glow bg__glow--a"></div>
+      <div class="bg__glow bg__glow--b"></div>
+    </div>
+
+    <div class="app" id="app" aria-label="AI Chat">
+      <aside class="side">
+        <header class="side__top">
+          <div class="brand">
+            <div class="brand__logo" aria-hidden="true"></div>
+            <div class="brand__text">
+              <div class="brand__title">AI Chat</div>
+              <div class="brand__sub">OpenRouter gateway</div>
+            </div>
+          </div>
+
+          <div class="side__actions">
+            <button class="btn btn--primary" id="newChatBtn" type="button">
+              <span class="btn__icon" aria-hidden="true">+</span>
+              Новый чат
+            </button>
+            <button class="btn btn--ghost" id="settingsBtn" type="button" title="Настройки">
+              <span class="btn__icon" aria-hidden="true">⚙</span>
+            </button>
+          </div>
+        </header>
+
+        <div class="side__search">
+          <input
+            class="input input--search"
+            id="chatSearch"
+            type="search"
+            placeholder="Поиск чатов…"
+            autocomplete="off"
+          />
+        </div>
+
+        <nav class="side__list" id="chatList" aria-label="Список чатов">
+          <div class="skeleton" id="chatListSkeleton">
+            <div class="skeleton__item"></div>
+            <div class="skeleton__item"></div>
+            <div class="skeleton__item"></div>
+          </div>
+        </nav>
+
+        <footer class="side__bottom">
+          <div class="hint">
+            <div class="hint__dot"></div>
+            <div class="hint__text">
+              Сессия хранится в cookie.<br />
+              Ответы могут содержать Markdown/код.
+            </div>
+          </div>
+        </footer>
+      </aside>
+
+      <main class="main">
+        <header class="main__top">
+          <div class="chathead">
+            <div class="chathead__title" id="chatTitle">Выберите чат</div>
+            <div class="chathead__meta" id="chatMeta">—</div>
+          </div>
+
+          <div class="main__actions">
+            <button class="btn btn--ghost" id="refreshBtn" type="button" title="Обновить">
+              <span class="btn__icon" aria-hidden="true">↻</span>
+              Обновить
+            </button>
+            <button class="btn btn--danger" id="deleteChatBtn" type="button" title="Удалить чат" disabled>
+              <span class="btn__icon" aria-hidden="true">✕</span>
+              Удалить
+            </button>
+          </div>
+        </header>
+
+        <section class="thread" id="thread" aria-label="Сообщения">
+          <div class="thread__empty" id="threadEmpty">
+            <div class="emptycard">
+              <div class="emptycard__badge">Tech UI</div>
+              <div class="emptycard__title">Готов к диалогу</div>
+              <div class="emptycard__text">
+                Создайте чат или выберите существующий, затем отправьте сообщение.
+              </div>
+              <div class="emptycard__tips">
+                <div class="tip"><span class="tip__k">Enter</span> — отправить</div>
+                <div class="tip"><span class="tip__k">Shift+Enter</span> — новая строка</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="composer" aria-label="Ввод сообщения">
+          <div class="composer__box">
+            <textarea
+              class="input input--textarea"
+              id="messageInput"
+              rows="1"
+              placeholder="Напишите сообщение…"
+              maxlength="4000"
+            ></textarea>
+
+            <div class="composer__bar">
+              <div class="composer__left">
+                <div class="status" id="status">
+                  <span class="status__dot" aria-hidden="true"></span>
+                  <span class="status__text" id="statusText">Готов</span>
+                </div>
+              </div>
+              <div class="composer__right">
+                <div class="counter" id="counter">0 / 4000</div>
+                <button class="btn btn--primary" id="sendBtn" type="button" disabled>
+                  <span class="btn__icon" aria-hidden="true">➤</span>
+                  Отправить
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog class="dlg" id="settingsDlg">
+      <form method="dialog" class="dlg__card">
+        <div class="dlg__top">
+          <div class="dlg__title">Настройки</div>
+          <button class="btn btn--ghost" value="cancel" type="submit" aria-label="Закрыть">✕</button>
+        </div>
+
+        <div class="dlg__body">
+          <label class="field">
+            <div class="field__label">API base (опционально)</div>
+            <input class="input" id="apiBaseInput" placeholder="http://127.0.0.1:8000" />
+            <div class="field__hint">
+              Оставьте пустым, если фронт раздаётся бэком или используется Netlify proxy `/api/*`.
+            </div>
+          </label>
+
+          <div class="row">
+            <button class="btn btn--ghost" id="clearStorageBtn" type="button">Сбросить UI</button>
+            <button class="btn btn--primary" id="saveSettingsBtn" type="button">Сохранить</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>
