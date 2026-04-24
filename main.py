@@ -39,7 +39,6 @@ app = FastAPI(
 
 app.title = "AI Chat"
 app.include_router(main_router)
-app.include_router(main_router, prefix="/api")
 
 FRONTEND_DIR = Path(__file__).resolve().parent / "frontend"
 STATIC_DIR = FRONTEND_DIR / "static"

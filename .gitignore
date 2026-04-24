@@ -25,6 +25,27 @@ htmlcov/
 
 # Env / secrets
 .env
+.env.local
+.env.*.local
 
 # Local DB / artifacts
 *.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Backup files
+*~
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Miscellaneous
+for_gpt_builder.py
