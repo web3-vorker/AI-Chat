@@ -2,7 +2,7 @@ from typing import Annotated
 import os
 from dotenv import load_dotenv
 
-load_dotenv()  # Load environment variables from .env file
+load_dotenv()
 
 from fastapi import Depends
 from sqlalchemy import event
