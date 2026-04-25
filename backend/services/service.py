@@ -8,9 +8,9 @@ from openai import OpenAIError
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from client.ai_client import AiClient
-from config.config import app_config
-from models.chat import Chat, ChatMessage
+from backend.client.ai_client import AiClient
+from backend.config.config import app_config
+from backend.models.chat import Chat, ChatMessage
 
 logger = logging.getLogger(__name__)
 

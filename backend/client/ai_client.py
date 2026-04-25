@@ -2,7 +2,7 @@ from openai import AsyncOpenAI, APIError, APIConnectionError
 import httpx
 import logging
 
-from config.config import app_config
+from backend.config.config import app_config
 
 logger = logging.getLogger(__name__)
 

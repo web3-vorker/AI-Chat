@@ -5,7 +5,7 @@ from sqlalchemy import engine_from_config, pool, create_engine
 from dotenv import load_dotenv
 from alembic import context
 
-from models.chat import Base  # поправь путь под свой проект
+from backend.models.chat import Base  # поправь путь под свой проект
 
 
 sys.path.append(os.getcwd())

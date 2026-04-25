@@ -131,7 +131,7 @@ class TestMessagesEndpoints:
         """Успешная отправка сообщения"""
         # Мокируем AI клиент
         mocker.patch(
-            'services.service.AiClient.chat',
+            'backend.services.service.AiClient.chat',
             return_value="Мокированный ответ"
         )
         
@@ -185,7 +185,7 @@ class TestMessagesEndpoints:
         from datetime import datetime
         
         mocker.patch(
-            'services.service.AiClient.chat',
+            'backend.services.service.AiClient.chat',
             return_value="Ответ"
         )
         
@@ -235,7 +235,7 @@ class TestAuthenticationAndSecurity:
         chat1_id = response1.json()["id"]
         
         # Создаём новый AsyncClient (новый session_id)
-        from tests.conftest import async_client as other_client
+        from backend.tests.conftest import async_client as other_client
         # На самом деле нужно будет два разных клиента
         # Для простоты здесь мы просто проверяем, что это возможно
         assert chat1_id is not None

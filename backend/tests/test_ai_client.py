@@ -6,9 +6,9 @@ import pytest
 import httpx
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from client.ai_client import AiClient
+from backend.client.ai_client import AiClient
 from openai import APIError, APIConnectionError
-from config.config import app_config
+from backend.config.config import app_config
 
 
 class TestAiClientChat:
@@ -24,7 +24,7 @@ class TestAiClientChat:
         mock_response.choices[0].message.content = "Ответ от AI"
         mock_client.chat.completions.create.return_value = mock_response
         
-        mocker.patch('client.ai_client.AsyncOpenAI', return_value=mock_client)
+        mocker.patch('backend.client.ai_client.AsyncOpenAI', return_value=mock_client)
         
         ai_client = AiClient()
         
@@ -47,7 +47,7 @@ class TestAiClientChat:
         mock_response.choices[0].message.content = None
         mock_client.chat.completions.create.return_value = mock_response
         
-        mocker.patch('client.ai_client.AsyncOpenAI', return_value=mock_client)
+        mocker.patch('backend.client.ai_client.AsyncOpenAI', return_value=mock_client)
         
         ai_client = AiClient()
         
@@ -64,7 +64,7 @@ class TestAiClientChat:
         mock_response.choices = []
         mock_client.chat.completions.create.return_value = mock_response
         
-        mocker.patch('client.ai_client.AsyncOpenAI', return_value=mock_client)
+        mocker.patch('backend.client.ai_client.AsyncOpenAI', return_value=mock_client)
         
         ai_client = AiClient()
         
@@ -82,7 +82,7 @@ class TestAiClientChat:
             request=httpx.Request("POST", "http://test"),
         )
         
-        mocker.patch('client.ai_client.AsyncOpenAI', return_value=mock_client)
+        mocker.patch('backend.client.ai_client.AsyncOpenAI', return_value=mock_client)
         
         ai_client = AiClient()
         
@@ -97,7 +97,7 @@ class TestAiClientChat:
         mock_error.status_code = 429  # Rate limited
         mock_client.chat.completions.create.side_effect = mock_error
         
-        mocker.patch('client.ai_client.AsyncOpenAI', return_value=mock_client)
+        mocker.patch('backend.client.ai_client.AsyncOpenAI', return_value=mock_client)
         
         ai_client = AiClient()
         
@@ -113,7 +113,7 @@ class TestAiClientChat:
         mock_response.choices[0].message.content = "Response"
         mock_client.chat.completions.create.return_value = mock_response
         
-        mocker.patch('client.ai_client.AsyncOpenAI', return_value=mock_client)
+        mocker.patch('backend.client.ai_client.AsyncOpenAI', return_value=mock_client)
         
         ai_client = AiClient()
         
@@ -143,7 +143,7 @@ class TestAiClientChat:
         mock_response.choices[0].message.content = long_response
         mock_client.chat.completions.create.return_value = mock_response
         
-        mocker.patch('client.ai_client.AsyncOpenAI', return_value=mock_client)
+        mocker.patch('backend.client.ai_client.AsyncOpenAI', return_value=mock_client)
         
         ai_client = AiClient()
         
@@ -163,7 +163,7 @@ class TestAiClientChat:
         mock_response.choices[0].message.content = special_response
         mock_client.chat.completions.create.return_value = mock_response
         
-        mocker.patch('client.ai_client.AsyncOpenAI', return_value=mock_client)
+        mocker.patch('backend.client.ai_client.AsyncOpenAI', return_value=mock_client)
         
         ai_client = AiClient()
         
@@ -177,7 +177,7 @@ class TestAiClientInitialization:
 
     def test_ai_client_initialization(self, mocker):
         """Инициализация AI клиента с правильными параметрами"""
-        mock_openai = mocker.patch('client.ai_client.AsyncOpenAI')
+        mock_openai = mocker.patch('backend.client.ai_client.AsyncOpenAI')
         
         ai_client = AiClient()
         
@@ -191,14 +191,14 @@ class TestAiClientInitialization:
 
     def test_ai_client_has_correct_model(self):
         """Проверка, что установлена правильная модель"""
-        with patch('client.ai_client.AsyncOpenAI'):
+        with patch('backend.client.ai_client.AsyncOpenAI'):
             ai_client = AiClient()
             
             assert ai_client.model == app_config.openrouter_model
 
     def test_ai_client_config(self):
         """Проверка конфигурации AI клиента"""
-        with patch('client.ai_client.AsyncOpenAI'):
+        with patch('backend.client.ai_client.AsyncOpenAI'):
             ai_client = AiClient()
             
             assert hasattr(ai_client, 'client')
@@ -215,7 +215,7 @@ class TestAiClientErrorHandling:
         mock_client = AsyncMock()
         mock_client.chat.completions.create.side_effect = Exception("Unexpected error")
         
-        mocker.patch('client.ai_client.AsyncOpenAI', return_value=mock_client)
+        mocker.patch('backend.client.ai_client.AsyncOpenAI', return_value=mock_client)
         
         ai_client = AiClient()
         
@@ -237,7 +237,7 @@ class TestAiClientErrorHandling:
         
         mock_client.chat.completions.create.side_effect = timeout_side_effect
         
-        mocker.patch('client.ai_client.AsyncOpenAI', return_value=mock_client)
+        mocker.patch('backend.client.ai_client.AsyncOpenAI', return_value=mock_client)
         
         ai_client = AiClient()
         

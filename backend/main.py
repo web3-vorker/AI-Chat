@@ -9,10 +9,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from db.database import engine
-from models.chat import Base
-from routers.routes import main_router
-from client.ai_client import AiClient
+from backend.db.database import engine
+from backend.models.chat import Base
+from backend.routers.routes import main_router
+from backend.client.ai_client import AiClient
 
 # Configure logging
 logging.basicConfig(
@@ -24,8 +24,6 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-  async with engine.begin() as conn:
-    await conn.run_sync(Base.metadata.create_all)
   app.state.ai_client = AiClient()
   yield
   ai_client = getattr(app.state, "ai_client", None)
@@ -40,7 +38,7 @@ app = FastAPI(
 app.title = "AI Chat"
 app.include_router(main_router)
 
-FRONTEND_DIR = Path(__file__).resolve().parent / "frontend"
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 STATIC_DIR = FRONTEND_DIR / "static"
 if STATIC_DIR.exists():
   app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
@@ -98,4 +96,4 @@ async def http_exception_handler(request, exc):
 
 
 if __name__ == "__main__":
-  uvicorn.run("main:app", reload=True)
+  uvicorn.run("backend.main:app", reload=True)

@@ -36,4 +36,4 @@ echo.
 echo    Нажмите Ctrl+C для остановки
 echo.
 
-python -m uvicorn main:app --reload
+python -m uvicorn backend.main:app --reload

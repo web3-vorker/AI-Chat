@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, Path, Request, Response
-from db.database import SessionDep
-from services.service import ChatService
-from schemas.chat import ChatOut
-from schemas.chat_message import ChatMessageOut
-from schemas.message import MessageSchema
-from schemas.send_message import SendMessageOut
+from backend.db.database import SessionDep
+from backend.services.service import ChatService
+from backend.schemas.chat import ChatOut
+from backend.schemas.chat_message import ChatMessageOut
+from backend.schemas.message import MessageSchema
+from backend.schemas.send_message import SendMessageOut
 
 
 main_router = APIRouter()

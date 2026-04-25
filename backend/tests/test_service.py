@@ -6,9 +6,9 @@ import pytest
 from datetime import datetime, timezone
 from sqlalchemy import select
 
-from services.service import ChatService
-from models.chat import Chat, ChatMessage
-from client.ai_client import AiClient
+from backend.services.service import ChatService
+from backend.models.chat import Chat, ChatMessage
+from backend.client.ai_client import AiClient
 
 
 class TestChatServiceChats:
@@ -160,7 +160,7 @@ class TestChatServiceMessages:
         """Отправка сообщения"""
         # Мокируем AI клиент
         mocker.patch(
-            'services.service.AiClient.chat',
+            'backend.services.service.AiClient.chat',
             return_value="Ответ от AI"
         )
         
@@ -182,7 +182,7 @@ class TestChatServiceMessages:
     async def test_send_message_stores_in_db(self, test_session, test_user_id, test_chat, mocker):
         """Проверка, что сообщение сохраняется в БД"""
         mocker.patch(
-            'services.service.AiClient.chat',
+            'backend.services.service.AiClient.chat',
             return_value="Ответ"
         )
         
@@ -207,7 +207,7 @@ class TestChatServiceMessages:
     async def test_send_message_to_nonexistent_chat(self, test_session, test_user_id, mocker):
         """Отправка сообщения в несуществующий чат"""
         mocker.patch(
-            'services.service.AiClient.chat',
+            'backend.services.service.AiClient.chat',
             return_value="Ответ"
         )
         
@@ -222,7 +222,7 @@ class TestChatServiceMessages:
     async def test_send_message_to_other_users_chat(self, test_session, test_user_id, test_chat, mocker):
         """Отправка сообщения в чат другого пользователя"""
         mocker.patch(
-            'services.service.AiClient.chat',
+            'backend.services.service.AiClient.chat',
             return_value="Ответ"
         )
         
@@ -286,7 +286,7 @@ class TestChatServiceInternal:
         
         # Мокируем AI клиент
         mocker.patch(
-            'services.service.AiClient.chat',
+            'backend.services.service.AiClient.chat',
             return_value="Ответ"
         )
         
@@ -335,7 +335,7 @@ class TestSessionIdManagement:
         from fastapi import Request, Response
         from unittest.mock import Mock
         from itsdangerous import URLSafeTimedSerializer
-        from config.config import app_config
+        from backend.config.config import app_config
         
         service = ChatService()
         serializer = URLSafeTimedSerializer(app_config.SECRET_KEY)

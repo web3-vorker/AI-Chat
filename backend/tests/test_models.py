@@ -5,7 +5,7 @@
 import pytest
 from datetime import datetime, timezone
 
-from models.chat import Chat, ChatMessage
+from backend.models.chat import Chat, ChatMessage
 
 
 class TestChatModel:

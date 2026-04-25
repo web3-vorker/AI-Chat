@@ -10,9 +10,9 @@ from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
-from db.database import get_session
-from main import app
-from models.chat import Base, Chat, ChatMessage
+from backend.db.database import get_session
+from backend.main import app
+from backend.models.chat import Base, Chat, ChatMessage
 from unittest.mock import AsyncMock, MagicMock, patch
 
 
@@ -89,7 +89,7 @@ async def async_client(test_session_maker, test_user_id):
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         from itsdangerous import URLSafeTimedSerializer
-        from config.config import app_config
+        from backend.config.config import app_config
 
         token = URLSafeTimedSerializer(app_config.SECRET_KEY).dumps({"user_id": test_user_id})
         client.cookies.set("session_id", token)
