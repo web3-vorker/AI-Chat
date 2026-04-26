@@ -5,7 +5,7 @@ from backend.schemas.chat import ChatOut
 from backend.schemas.chat_message import ChatMessageOut
 from backend.schemas.message import MessageSchema
 from backend.schemas.send_message import SendMessageOut
-
+from backend.auth.dependencies import get_current_user
 
 main_router = APIRouter()
 
@@ -20,8 +20,9 @@ async def get_chats(
     response: Response,
     session: SessionDep,
     service: ChatService = Depends(get_chat_service),
+    current_user = Depends(get_current_user),
 ) -> list[ChatOut]:
-    user_id = service.get_or_create_session_id(request, response)
+    user_id = current_user.id
     return await service.get_user_chats(user_id, session)
 
 
@@ -32,8 +33,9 @@ async def get_chat_messages(
     session: SessionDep,
     chat_id: int = Path(..., gt=0),
     service: ChatService = Depends(get_chat_service),
+    current_user = Depends(get_current_user),
 ) -> list[ChatMessageOut]:
-    user_id = service.get_or_create_session_id(request, response)
+    user_id = current_user.id
     return await service.get_chat_messages(chat_id, user_id, session)
 
 
@@ -45,8 +47,9 @@ async def send_message(
     body: MessageSchema,
     chat_id: int = Path(..., gt=0),
     service: ChatService = Depends(get_chat_service),
+    current_user = Depends(get_current_user)
 ) -> SendMessageOut:
-    user_id = service.get_or_create_session_id(request, response)
+    user_id = current_user.id
     return await service.send_message(chat_id, user_id, body.content, session)
 
 
@@ -56,8 +59,9 @@ async def create_chat(
     response: Response,
     session: SessionDep,
     service: ChatService = Depends(get_chat_service),
+    current_user = Depends(get_current_user)
 ) -> ChatOut:
-    user_id = service.get_or_create_session_id(request, response)
+    user_id = current_user.id
     return await service.create_chat(user_id, session)
 
 
@@ -68,6 +72,7 @@ async def delete_chat(
     session: SessionDep,
     chat_id: int = Path(..., gt=0),
     service: ChatService = Depends(get_chat_service),
+    current_user = Depends(get_current_user)
 ) -> dict:
-    user_id = service.get_or_create_session_id(request, response)
+    user_id = current_user.id
     return await service.delete_chat(chat_id, user_id, session)

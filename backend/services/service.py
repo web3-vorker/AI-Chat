@@ -9,7 +9,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.client.ai_client import AiClient
-from backend.config.config import app_config
+from backend.config.ai_client_config import app_config
 from backend.models.chat import Chat, ChatMessage
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ class ChatService:
 
     # -------- CHATS --------
 
-    async def create_chat(self, user_id: str, session: AsyncSession) -> Chat:
+    async def create_chat(self, user_id: int, session: AsyncSession) -> Chat:
         chat = Chat(
             user_id=user_id,
             title="New chat",
@@ -36,13 +36,13 @@ class ChatService:
         await session.refresh(chat)
         return chat
 
-    async def get_user_chats(self, user_id: str, session: AsyncSession) -> list[Chat]:
+    async def get_user_chats(self, user_id: int, session: AsyncSession) -> list[Chat]:
         result = await session.execute(
             select(Chat).where(Chat.user_id == user_id).order_by(Chat.updated_at.desc())
         )
         return result.scalars().all()
 
-    async def delete_chat(self, chat_id: int, user_id: str, session: AsyncSession) -> dict:
+    async def delete_chat(self, chat_id: int, user_id: int, session: AsyncSession) -> dict:
         chat = await self._get_chat_or_404(chat_id, user_id, session)
 
         await session.execute(delete(ChatMessage).where(ChatMessage.chat_id == chat_id))
@@ -53,7 +53,7 @@ class ChatService:
 
     # -------- MESSAGES --------
 
-    async def get_chat_messages(self, chat_id: int, user_id: str, session: AsyncSession) -> list[ChatMessage]:
+    async def get_chat_messages(self, chat_id: int, user_id: int, session: AsyncSession) -> list[ChatMessage]:
         await self._get_chat_or_404(chat_id, user_id, session)
 
         result = await session.execute(
@@ -63,7 +63,7 @@ class ChatService:
         )
         return result.scalars().all()
 
-    async def send_message(self, chat_id: int, user_id: str, content: str, session: AsyncSession) -> dict:
+    async def send_message(self, chat_id: int, user_id: int, content: str, session: AsyncSession) -> dict:
         chat = await self._get_chat_or_404(chat_id, user_id, session)
 
         content = (content or "").strip()
@@ -110,7 +110,7 @@ class ChatService:
 
     # -------- INTERNAL --------
 
-    async def _get_chat_or_404(self, chat_id: int, user_id: str, session: AsyncSession) -> Chat:
+    async def _get_chat_or_404(self, chat_id: int, user_id: int, session: AsyncSession) -> Chat:
         result = await session.execute(
             select(Chat).where(Chat.id == chat_id).where(Chat.user_id == user_id)
         )
@@ -138,51 +138,3 @@ class ChatService:
         result = await session.execute(stmt)
         messages = list(result.scalars().all())
         return list(reversed(messages))
-
-    def get_or_create_session_id(self, request: Request, response: Response) -> str:
-        """Get or create session_id stored in signed cookie."""
-
-        header_token = None
-        try:
-            header_token = request.headers.get("X-Session-Id")
-        except Exception:
-            header_token = None
-
-        session_token = header_token if isinstance(header_token, str) and header_token else request.cookies.get("session_id")
-        max_age = 86400 * 30
-
-        def _set_cookie(token: str) -> None:
-            response.set_cookie(
-                key="session_id",
-                value=token,
-                httponly=True,
-                secure=app_config.COOKIE_SECURE,
-                samesite=app_config.COOKIE_SAMESITE,
-                path="/",
-                max_age=max_age,
-            )
-            try:
-                response.headers["X-Session-Id"] = token
-            except Exception:
-                pass
-
-        if not session_token:
-            user_id = str(uuid4())
-            token = serializer.dumps({"user_id": user_id})
-            _set_cookie(token)
-            return user_id
-
-        try:
-            data = serializer.loads(session_token, max_age=max_age)
-            # Refresh cookie attributes / sliding expiration
-            _set_cookie(session_token)
-            return data["user_id"]
-        except (BadSignature, SignatureExpired):
-            logger.warning("Invalid or expired session token")
-        except Exception as e:
-            logger.error("Error validating session token: %s", e, exc_info=True)
-
-        user_id = str(uuid4())
-        token = serializer.dumps({"user_id": user_id})
-        _set_cookie(token)
-        return user_id
