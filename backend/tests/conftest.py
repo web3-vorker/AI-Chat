@@ -12,7 +12,8 @@ from sqlalchemy.pool import StaticPool
 
 from backend.db.database import get_session
 from backend.main import app
-from backend.models.chat import Base, Chat, ChatMessage
+from backend.models.base import Base
+from backend.models.chat import Chat, ChatMessage
 from unittest.mock import AsyncMock, MagicMock, patch
 
 
@@ -67,9 +68,11 @@ async def test_session(test_session_maker):
         yield session
 
     # Очищаем БД после теста
+    from backend.models.user import UserModel
     async with test_session_maker() as session:
         await session.execute(delete(ChatMessage))
         await session.execute(delete(Chat))
+        await session.execute(delete(UserModel))
         await session.commit()
 
 
@@ -77,22 +80,24 @@ async def test_session(test_session_maker):
 
 
 @pytest.fixture
-async def async_client(test_session_maker, test_user_id):
+async def async_client(test_session_maker, test_user, test_access_token):
     """Создаёт async HTTP клиент для тестирования API"""
 
     async def override_get_session():
         async with test_session_maker() as session:
             yield session
 
+    from backend.auth.dependencies import get_current_user
+    
+    async def override_get_current_user():
+        return test_user
+    
     app.dependency_overrides[get_session] = override_get_session
+    app.dependency_overrides[get_current_user] = override_get_current_user
 
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-        from itsdangerous import URLSafeTimedSerializer
-        from backend.config.config import app_config
-
-        token = URLSafeTimedSerializer(app_config.SECRET_KEY).dumps({"user_id": test_user_id})
-        client.cookies.set("session_id", token)
+        client.headers["Authorization"] = f"Bearer {test_access_token}"
         yield client
 
     app.dependency_overrides.clear()
@@ -104,8 +109,31 @@ async def async_client(test_session_maker, test_user_id):
 @pytest.fixture
 def test_user_id():
     """ID тестового пользователя"""
+    return 1
 
-    return "test-user-123"
+
+@pytest.fixture
+async def test_user(test_session, test_user_id):
+    """Создаёт тестового пользователя в БД"""
+    from backend.models.user import UserModel
+    from backend.auth.security.password import hash_password
+    
+    user = UserModel(
+        id=test_user_id,
+        email="test@example.com",
+        password_hash=hash_password("testpassword123")
+    )
+    test_session.add(user)
+    await test_session.commit()
+    await test_session.refresh(user)
+    return user
+
+
+@pytest.fixture
+def test_access_token(test_user_id):
+    """Создаёт JWT токен для тестового пользователя"""
+    from backend.auth.security.password import create_access_token
+    return create_access_token(uid=str(test_user_id))
 
 
 @pytest.fixture

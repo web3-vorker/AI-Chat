@@ -42,7 +42,7 @@ class TestChatServiceChats:
         """Получение пустого списка чатов"""
         service = ChatService()
         
-        chats = await service.get_user_chats("non-existent-user", test_session)
+        chats = await service.get_user_chats(999, test_session)
         
         assert len(chats) == 0
 
@@ -90,7 +90,7 @@ class TestChatServiceChats:
         service = ChatService()
         
         with pytest.raises(Exception) as exc_info:
-            await service.delete_chat(test_chat.id, "other-user", test_session)
+            await service.delete_chat(test_chat.id, 999, test_session)
         
         assert "404" in str(exc_info.value) or "not found" in str(exc_info.value).lower()
 
@@ -306,49 +306,3 @@ class TestChatServiceInternal:
         messages = await service._get_last_messages(chat.id, test_session, limit=3)
         
         assert len(messages) <= 3
-
-
-class TestSessionIdManagement:
-    """Тесты управления session ID"""
-
-    def test_get_or_create_session_id_creates_new(self, test_session):
-        """Создание новой session ID"""
-        from fastapi import Request, Response
-        from unittest.mock import Mock
-        
-        service = ChatService()
-        
-        request = Mock(spec=Request)
-        request.cookies.get.return_value = None
-        
-        response = Mock(spec=Response)
-        
-        session_id = service.get_or_create_session_id(request, response)
-        
-        assert session_id is not None
-        assert len(session_id) > 0
-        # Должен быть вызван set_cookie
-        response.set_cookie.assert_called_once()
-
-    def test_get_or_create_session_id_reuses_existing(self, test_session):
-        """Повторное использование существующей session ID"""
-        from fastapi import Request, Response
-        from unittest.mock import Mock
-        from itsdangerous import URLSafeTimedSerializer
-        from backend.config.config import app_config
-        
-        service = ChatService()
-        serializer = URLSafeTimedSerializer(app_config.SECRET_KEY)
-        
-        # Создаём валидный токен
-        user_id = "test-user-123"
-        token = serializer.dumps({"user_id": user_id})
-        
-        request = Mock(spec=Request)
-        request.cookies.get.return_value = token
-        
-        response = Mock(spec=Response)
-        
-        session_id = service.get_or_create_session_id(request, response)
-        
-        assert session_id == user_id

@@ -20,9 +20,10 @@ const ui = {
   statusText: $("#statusText"),
   settingsBtn: $("#settingsBtn"),
   settingsDlg: $("#settingsDlg"),
-  apiBaseInput: $("#apiBaseInput"),
-  saveSettingsBtn: $("#saveSettingsBtn"),
-  clearStorageBtn: $("#clearStorageBtn"),
+  logoutBtn: $("#logoutBtn"),
+  sidebarToggle: $("#sidebarToggle"),
+  sidebarOverlay: $("#sidebarOverlay"),
+  side: $(".side"),
 };
 
 const store = {
@@ -55,8 +56,41 @@ const state = {
   activeChatId: Number(store.get("activeChatId", "0")) || null,
   loading: false,
   sending: false,
-  sessionToken: store.get("sessionToken", null),
+  accessToken: store.get("accessToken", null),
 };
+
+// Initialize application
+async function boot() {
+  const token = store.get("accessToken");
+  if (token) {
+    state.accessToken = token;
+  }
+
+  try {
+    setStatus("busy", "Загружаю чаты…");
+    await loadChats({ keepActive: true });
+
+    if (state.activeChatId) {
+      const chat = state.chats.find((c) => c.id === state.activeChatId);
+      if (chat) {
+        await loadMessages(state.activeChatId);
+      }
+    }
+
+    setStatus("ok", "Готово");
+  } catch (e) {
+    console.error("Failed to load chats on boot:", e);
+    if (e?.status === 401) {
+      store.del("accessToken");
+      state.accessToken = null;
+      window.location.href = "/login.html";
+      return;
+    }
+    setStatus("err", e.message || "Ошибка загрузки чатов");
+  } finally {
+    updateComposer();
+  }
+}
 
 function apiBase() {
   const saved = (store.get("apiBase", "") || "").trim();
@@ -80,6 +114,7 @@ function apiPrefix() {
   if (saved) return "";
   const isLocalhost =
     location.hostname === "127.0.0.1" || location.hostname === "localhost";
+  if (isLocalhost && location.port === "8000") return "/api";
   if (isLocalhost) return "";
   return "/api";
 }
@@ -87,7 +122,7 @@ function apiPrefix() {
 async function apiFetch(path, { method = "GET", json = null } = {}) {
   const headers = {};
   if (json !== null) headers["Content-Type"] = "application/json";
-  if (state.sessionToken) headers["X-Session-Id"] = state.sessionToken;
+  if (state.accessToken) headers["Authorization"] = `Bearer ${state.accessToken}`;
 
   const res = await fetch(`${apiBase()}${apiPrefix()}${path}`, {
     method,
@@ -96,13 +131,14 @@ async function apiFetch(path, { method = "GET", json = null } = {}) {
     credentials: "include",
   });
 
-  const headerToken = res.headers.get("X-Session-Id");
-  if (headerToken) {
-    state.sessionToken = headerToken;
-    store.set("sessionToken", headerToken);
-  }
-
   if (!res.ok) {
+    // Если 401 - перенаправляем на логин
+    if (res.status === 401) {
+      store.del("accessToken");
+      window.location.href = "/login.html";
+      return;
+    }
+
     let detail = `${res.status} ${res.statusText}`;
     try {
       const data = await res.json();
@@ -299,6 +335,11 @@ async function openChat(chatId) {
   setActiveChat(chat);
   renderChatList();
   await loadMessages(chatId);
+
+  // Закрываем сайдбар на мобильных после выбора чата
+  if (window.innerWidth < 768) {
+    toggleSidebar(false);
+  }
 }
 
 async function createChat() {
@@ -387,47 +428,7 @@ async function sendMessage() {
 }
 
 function openSettings() {
-  ui.apiBaseInput.value = store.get("apiBase", "");
   ui.settingsDlg.showModal();
-}
-
-function saveSettings() {
-  const v = (ui.apiBaseInput.value || "").trim();
-  store.set("apiBase", v);
-  ui.settingsDlg.close();
-  boot().catch(console.error);
-}
-
-function clearUiStorage() {
-  const ok = confirm("Сбросить UI (выбор чата, API base, session token)?");
-  if (!ok) return;
-  for (const k of ["activeChatId", "apiBase", "sessionToken"]) store.del(k);
-  location.reload();
-}
-
-async function boot() {
-  setStatus(null, "Загружаю…");
-  ui.threadEmpty.style.display = "grid";
-  clearThread();
-
-  await loadChats({ keepActive: true });
-
-  if (state.activeChatId) {
-    await openChat(state.activeChatId);
-    setStatus(null, "Готов");
-    return;
-  }
-
-  if (state.chats.length) {
-    await openChat(state.chats[0].id);
-    setStatus(null, "Готов");
-    return;
-  }
-
-  // no chats: create one lazily
-  setActiveChat(null);
-  renderChatList();
-  setStatus(null, "Готов");
 }
 
 ui.newChatBtn.addEventListener("click", async () => {
@@ -471,9 +472,27 @@ ui.sendBtn.addEventListener("click", () => {
 });
 
 ui.settingsBtn.addEventListener("click", openSettings);
-ui.saveSettingsBtn.addEventListener("click", saveSettings);
-ui.clearStorageBtn.addEventListener("click", clearUiStorage);
 
+ui.logoutBtn.addEventListener("click", () => {
+  const ok = confirm("Выйти из аккаунта?");
+  if (!ok) return;
+  store.del("accessToken");
+  ui.settingsDlg.close();
+  window.location.href = "/login.html";
+});
+
+function toggleSidebar(open) {
+  if (open === undefined) {
+    open = !ui.side.classList.contains("side--open");
+  }
+  ui.side.classList.toggle("side--open", open);
+  ui.sidebarOverlay.classList.toggle("sidebar-overlay--visible", open);
+}
+
+ui.sidebarToggle.addEventListener("click", () => toggleSidebar());
+ui.sidebarOverlay.addEventListener("click", () => toggleSidebar(false));
+
+// Initialize the application
 updateComposer();
 boot().catch((e) => {
   console.error(e);

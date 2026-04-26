@@ -1,16 +1,16 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import DateTime, ForeignKey, String, Text
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from backend.models.base import Base
+from backend.models.user import UserModel
 
-class Base(DeclarativeBase):
-  pass
 class Chat(Base):
     __tablename__ = "chats"
     
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[str] = mapped_column(index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     title: Mapped[str] = mapped_column(default="New chat")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
@@ -28,6 +28,8 @@ class Chat(Base):
         back_populates="chat",
         lazy="noload",
     )
+
+    user: Mapped["UserModel"] = relationship("UserModel", lazy="noload")
 
     def __init__(self, **kwargs):
         if kwargs.get("title") is None:

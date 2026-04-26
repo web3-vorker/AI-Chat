@@ -1,14 +1,17 @@
 from logging.config import fileConfig
 import sys
 import os
+from pathlib import Path
 from sqlalchemy import engine_from_config, pool, create_engine
 from dotenv import load_dotenv
 from alembic import context
 
-from backend.models.chat import Base  # поправь путь под свой проект
+REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT))
 
-
-sys.path.append(os.getcwd())
+from backend.models.base import Base
+from backend.models import chat  # noqa: F401
+from backend.models import user  # noqa: F401
 
 load_dotenv()
 

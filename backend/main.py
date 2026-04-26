@@ -8,10 +8,12 @@ from pathlib import Path
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.staticfiles import StaticFiles
+from authx.exceptions import MissingTokenError, JWTDecodeError
 
 from backend.db.database import engine
 from backend.models.chat import Base
 from backend.routers.routes import main_router
+from backend.auth.routes.auth import auth_router
 from backend.client.ai_client import AiClient
 
 # Configure logging
@@ -37,6 +39,7 @@ app = FastAPI(
 
 app.title = "AI Chat"
 app.include_router(main_router, prefix="/api")
+app.include_router(auth_router, prefix="/api")
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 STATIC_DIR = FRONTEND_DIR / "static"
@@ -49,6 +52,14 @@ async def frontend_index():
   if not index_path.exists():
     raise HTTPException(status_code=404, detail="Frontend not found")
   return FileResponse(str(index_path))
+
+
+@app.get("/login.html")
+async def frontend_login():
+  login_path = FRONTEND_DIR / "login.html"
+  if not login_path.exists():
+    raise HTTPException(status_code=404, detail="Login page not found")
+  return FileResponse(str(login_path))
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
@@ -75,6 +86,22 @@ app.add_middleware(
     expose_headers=["X-Session-Id"],
     max_age=3600,
 )
+
+
+@app.exception_handler(MissingTokenError)
+async def missing_token_handler(request, exc):
+    return JSONResponse(
+        status_code=401,
+        content={"detail": "Missing authentication token"}
+    )
+
+
+@app.exception_handler(JWTDecodeError)
+async def jwt_decode_error_handler(request, exc):
+    return JSONResponse(
+        status_code=401,
+        content={"detail": "Invalid authentication token"}
+    )
 
 
 @app.exception_handler(Exception)
