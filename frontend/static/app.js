@@ -101,8 +101,12 @@ function apiBase() {
     if (location.port === "8000") return "";
     return "http://127.0.0.1:8000";
   }
-  // Production: use config from window.APP_CONFIG if available
-  if (window.APP_CONFIG && window.APP_CONFIG.BACKEND_URL) {
+  // Production: use config from window.APP_CONFIG if available and not a placeholder
+  if (
+    window.APP_CONFIG &&
+    window.APP_CONFIG.BACKEND_URL &&
+    window.APP_CONFIG.BACKEND_URL !== "__BACKEND_URL__"
+  ) {
     return window.APP_CONFIG.BACKEND_URL.replace(/\/+$/, "");
   }
   // Fallback: use same-origin proxy (/api/*) by default

@@ -21,5 +21,4 @@ services:
         value: "20"
       # ВАЖНО: замените origin на ваш Netlify домен после деплоя
       - key: CORS_ORIGINS
-        value: http://127.0.0.1:5500,https://aichatbridge.netlify.app/
-
+        value: http://127.0.0.1:5500,https://ai-chat-1-9a9z.onrender.com
