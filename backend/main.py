@@ -95,8 +95,8 @@ app.add_middleware(
         "http://localhost:3000,http://127.0.0.1:5500,http://localhost:5500",
     ).split(","),
     allow_credentials=True,
-    allow_methods=["GET", "POST", "DELETE"],
-    allow_headers=["Content-Type", "X-Session-Id"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Session-Id"],
     expose_headers=["X-Session-Id"],
     max_age=3600,
 )
