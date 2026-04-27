@@ -26,6 +26,22 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+  # Run migrations on startup
+  try:
+    import subprocess
+    result = subprocess.run(
+      ["alembic", "upgrade", "head"],
+      capture_output=True,
+      text=True,
+      cwd=Path(__file__).parent.parent,
+    )
+    if result.returncode == 0:
+      logger.info("Database migrations applied successfully")
+    else:
+      logger.warning(f"Migration warning: {result.stderr}")
+  except Exception as e:
+    logger.warning(f"Migration skipped: {e}")
+
   app.state.ai_client = AiClient()
   yield
   ai_client = getattr(app.state, "ai_client", None)
