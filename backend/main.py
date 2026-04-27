@@ -26,14 +26,17 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-  # Run migrations on startup
+  # Run migrations on startup - create tables if they don't exist
   try:
-    from alembic.config import Config
-    from alembic import command
+    from sqlalchemy import text
+    from backend.db.database import engine
+    from backend.models.base import Base
+    from backend.models import user, chat
     
-    alembic_cfg = Config(str(Path(__file__).parent / "alembic.ini"))
-    command.upgrade(alembic_cfg, "head")
-    logger.info("Database migrations applied successfully")
+    async with engine.begin() as conn:
+      # Create all tables from metadata
+      await conn.run_sync(Base.metadata.create_all)
+      logger.info("Database tables created successfully")
   except Exception as e:
     logger.warning(f"Migration error: {e}")
 
